@@ -16,6 +16,7 @@ import {
 } from 'cc';
 
 import { PlayerController } from './PlayerController';
+import { PropArt } from './PropArt';
 
 const { ccclass, property } = _decorator;
 
@@ -45,6 +46,19 @@ export class BackgroundController extends Component {
 
     private readonly switchTimes = [
         16, 32, 48, 64, 80, 96,
+    ];
+
+    // 与原有七份小球材质对应，采用指定的道路意境与独立配色。
+    // 普通砖面使用接近白色的顶点色，避免材质再次乘暗；道路整体偏浅、低饱和。
+    // 同色主题用饱和度和明度区分，其余主题同时拉开色相差异。
+    private readonly floorColors = [
+        new Color(242, 220, 154), // 街边灯黄：淡奶金，区别于高饱和琥珀金球
+        new Color(224, 160, 147), // 红枫栈桥：柔和浅枫红，区别于朝霞红球
+        new Color(239, 241, 235), // 白灰石径：月白石灰，衬天蓝球
+        new Color(204, 222, 149), // 草色：浅黄草绿，区别于青绿球
+        new Color(139, 178, 184), // 幽径：雾青蓝，仍与月白球保留明度差
+        new Color(178, 209, 188), // 世外桃源山色：淡青山绿，衬桃粉球
+        new Color(205, 210, 204), // 水墨灰：浅宣纸灰，区别于较深的银灰球
     ];
 
     private backgroundSprite!: Sprite;
@@ -183,9 +197,12 @@ export class BackgroundController extends Component {
                 this.backgrounds[index];
 
             this.fitBackground();
+
+            // 同步主题索引，但使用独立配对的道路颜色；重开也恢复第一组。
+            PropArt.setFloorTheme(this.floorColors[index]);
         }
 
-        // 背景和小球共用同一个索引。
+        // 背景、普通地板和小球共用同一个索引。
         this.setBallMaterial(index);
     }
 

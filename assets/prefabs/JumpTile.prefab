@@ -22,6 +22,9 @@
     "_components": [
       {
         "__id__": 2
+      },
+      {
+        "__id__": 6
       }
     ],
     "_prefab": {
@@ -128,5 +131,26 @@
     "fileId": "5efVEIUI5FK6CD0t4QcgsV",
     "instance": null,
     "targetOverrides": null
+  },
+  {
+    "__type__": "df89aTsgwFfxY6j4VRwC5Ee",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_id": "",
+    "kind": "jump",
+    "palette": {
+      "__uuid__": "260c9fea-5e2f-5f5b-9918-feeb63616e30",
+      "__expectedType__": "cc.Material"
+    },
+    "glassMaterial": {
+      "__uuid__": "3ab06bc7-a945-5eca-9f71-4922969e3914",
+      "__expectedType__": "cc.Material"
+    }
   }
 ]

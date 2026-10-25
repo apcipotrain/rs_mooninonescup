@@ -35,6 +35,9 @@
     "_components": [
       {
         "__id__": 22
+      },
+      {
+        "__id__": 26
       }
     ],
     "_prefab": {
@@ -567,7 +570,7 @@
     },
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "c1a1ac44-a320-54ef-a29a-95a62da29ede",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -625,5 +628,26 @@
     "fileId": "5efVEIUI5FK6CD0t4QcgsV",
     "instance": null,
     "targetOverrides": null
+  },
+  {
+    "__type__": "df89aTsgwFfxY6j4VRwC5Ee",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_id": "",
+    "kind": "tile",
+    "palette": {
+      "__uuid__": "260c9fea-5e2f-5f5b-9918-feeb63616e30",
+      "__expectedType__": "cc.Material"
+    },
+    "glassMaterial": {
+      "__uuid__": "3ab06bc7-a945-5eca-9f71-4922969e3914",
+      "__expectedType__": "cc.Material"
+    }
   }
 ]

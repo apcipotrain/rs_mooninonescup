@@ -9,6 +9,7 @@ import {
 } from 'cc';
 
 import { RoadGenerator } from './RoadGenerator';
+import { PropArt } from './PropArt';
 
 const { ccclass, property } = _decorator;
 
@@ -232,6 +233,7 @@ export class LaserSystem extends Component {
             for (const point of this.points) {
                 const emitter =
                     instantiate(this.emitterPrefab!);
+                emitter.getComponent(PropArt)?.ensureBuilt();
 
                 emitter.parent = this.road!.node;
                 this.emitters.push(emitter);
@@ -246,6 +248,7 @@ export class LaserSystem extends Component {
 
                 const beam =
                     instantiate(this.beamPrefab!);
+                beam.getComponent(PropArt)?.ensureBuilt();
 
                 beam.parent = this.road!.node;
                 this.beams.push(beam);
@@ -280,6 +283,18 @@ export class LaserSystem extends Component {
     // 自动把原本位于 XZ 平面的 Plane 竖起来，
     // 并按实际网格尺寸调整宽、高。
     private fitEmitter(root: Node) {
+        if (root.getComponent(PropArt)) {
+            const model = root.getChildByName('Model')!;
+            const mesh = model.getComponent(MeshRenderer)!.mesh!;
+            const min = mesh.struct.minPosition!, max = mesh.struct.maxPosition!;
+            const sx = this.emitterWidth / (max.x-min.x);
+            const sy = this.emitterHeight / (max.y-min.y);
+            const sz = this.emitterDepth / (max.z-min.z);
+            root.setScale(1,1,1); root.setRotationFromEuler(0,0,0);
+            model.setRotationFromEuler(0,0,0); model.setScale(sx,sy,sz);
+            model.setPosition(-(min.x+max.x)*0.5*sx,-min.y*sy,-(min.z+max.z)*0.5*sz);
+            return;
+        }
         const model = root.getChildByName('Model');
 
         const mesh =
@@ -459,6 +474,7 @@ private fitBeam(
                 this.clock >= start &&
                 this.clock <
                 start + this.fireDuration - 1e-9;
+            this.emitters[index]?.getComponent(PropArt)?.setFiring(beam.active);
         });
     }
 

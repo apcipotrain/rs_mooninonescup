@@ -8,6 +8,7 @@ import {
     MeshRenderer,
     instantiate,
 } from 'cc';
+import { PropArt } from './PropArt';
 
 const { ccclass, property } = _decorator;
 
@@ -477,6 +478,7 @@ export class RoadGenerator extends Component {
                     }
 
                     const instance = instantiate(prefab);
+                    instance.getComponent(PropArt)?.ensureBuilt();
                     instance.parent = rowNode;
                     instance.setPosition(
                         (col - 2) * this.tileSize,
@@ -495,6 +497,7 @@ export class RoadGenerator extends Component {
                     this.mountainPrefab
                 ) {
                     mountain = instantiate(this.mountainPrefab);
+                    mountain.getComponent(PropArt)?.ensureBuilt();
                     mountain.parent = rowNode;
                     mountain.setPosition(
                         (col - 2) * this.tileSize,
@@ -1145,6 +1148,7 @@ export class RoadGenerator extends Component {
             }
 
             const instance = instantiate(prefab);
+            instance.getComponent(PropArt)?.ensureBuilt();
             instance.parent = this.node;
 
             // 当前预制体的 Visual 位于局部 Y=1.2。

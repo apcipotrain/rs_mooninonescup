@@ -68,6 +68,13 @@ export class PlayerController extends Component {
         ((event: EventMouse) => boolean) | null = null;
 
     private keys = new Set<KeyCode>();
+    private entryBlocked = false;
+    private entryHeldKeys = new Set<KeyCode>();
+
+    public setEntryBlocked(blocked: boolean) {
+        this.entryBlocked = blocked;
+        this.clearInput();
+    }
 
     private dragging = false;
     private mouseStartX = 0;
@@ -177,6 +184,13 @@ export class PlayerController extends Component {
             return;
         }
 
+        if (this.entryBlocked) {
+            this.entryHeldKeys.add(event.keyCode);
+            return;
+        }
+        // Holding a direction on the cover must not start the level via OS key repeat.
+        if (this.entryHeldKeys.has(event.keyCode)) return;
+
         if (this.mode === 'ready') {
             this.node.emit('request-start');
         }
@@ -188,10 +202,12 @@ export class PlayerController extends Component {
 
     private onKeyUp(event: EventKeyboard) {
         this.keys.delete(event.keyCode);
+        this.entryHeldKeys.delete(event.keyCode);
     }
 
     private onMouseDown(event: EventMouse) {
         if (
+            this.entryBlocked ||
             event.getButton() !== EventMouse.BUTTON_LEFT ||
             (
                 this.mode !== 'ready' &&
@@ -210,6 +226,7 @@ export class PlayerController extends Component {
     }
 
     private onMouseMove(event: EventMouse) {
+        if (this.entryBlocked) return;
         this.lastMouseX = event.getLocationX();
 
         if (this.teleporting) {
@@ -239,6 +256,7 @@ export class PlayerController extends Component {
     }
 
     private onMouseUp(event: EventMouse) {
+        if (this.entryBlocked) { this.dragging = false; return; }
         if (event.getButton() !== EventMouse.BUTTON_LEFT) {
             return;
         }

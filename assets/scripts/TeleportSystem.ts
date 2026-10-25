@@ -8,6 +8,7 @@ import {
 } from 'cc';
 
 import { RoadGenerator } from './RoadGenerator';
+import { PropArt } from './PropArt';
 
 const { ccclass, property } = _decorator;
 
@@ -193,6 +194,7 @@ export class TeleportSystem extends Component {
     for (const point of this.entries) {
         const instance =
             instantiate(this.teleportPrefab!);
+        instance.getComponent(PropArt)?.ensureBuilt();
 
         instance.parent = this.road!.node;
 

@@ -6,6 +6,9 @@ import {
     AudioSource,
     Label,
     Button,
+    Slider,
+    Sprite,
+    sys,
     UITransform,
     Graphics,
     Color,
@@ -18,10 +21,12 @@ import {
 } from 'cc';
 
 import { PlayerController } from './PlayerController';
+import { LevelCover } from './LevelCover';
 
 const { ccclass, property } = _decorator;
 
 type GameState =
+    | 'cover'
     | 'ready'
     | 'running'
     | 'paused'
@@ -76,6 +81,13 @@ export class GameManager extends Component {
     private panelHeight = -1;
     private lastHUDValue = -1;
     private lastHUDText = '';
+    private cover!: Node;
+    private readonly volumeStorageKey = 'moon-in-ones-cup.music-volume';
+    private volume = 60;
+    private volumePanel!: Node;
+    private volumeSlider!: Slider;
+    private volumeLabel!: Label;
+    private volumeTrack!: Graphics;
 
     onLoad() {
         if (!this.player || !this.uiCanvas || !this.bgm) {
@@ -88,12 +100,14 @@ export class GameManager extends Component {
         }
 
         this.bgm.playOnAwake = false;
+        this.restoreVolume();
 
         this.buildUI();
         this.bindEvents();
 
         this.initialized = true;
         this.restartGame();
+        this.showCover();
     }
 
     start() {
@@ -128,6 +142,7 @@ export class GameManager extends Component {
 
         this.player!.isPointerOverUI = (event: EventMouse) => {
             return (
+                this.state === 'cover' ||
                 this.pauseButton.activeInHierarchy &&
                 this.pauseButton
                     .getComponent(UITransform)!
@@ -273,6 +288,71 @@ export class GameManager extends Component {
         return node.addComponent(Graphics);
     }
 
+    private restoreVolume() {
+        let value = Math.round(this.bgm!.volume * 100);
+        try {
+            const saved = sys.localStorage.getItem(this.volumeStorageKey);
+            if (saved !== null && saved.trim() !== '' && Number.isFinite(Number(saved))) {
+                value = Number(saved);
+            }
+        } catch {
+            // Preview/private browser storage may be unavailable; session volume still works.
+        }
+        this.setVolume(value, false);
+    }
+
+    private setVolume(value: number, persist = true) {
+        if (!Number.isFinite(value)) return;
+        const next = Math.max(0, Math.min(100, Math.round(value)));
+        const changed = next !== this.volume;
+        this.volume = next;
+        this.bgm!.volume = next / 100;
+        if (this.volumeSlider) {
+            this.volumeSlider.progress = next / 100;
+            this.volumeLabel.string = `音乐音量  ${next} / 100`;
+            this.drawProgressBar(this.volumeTrack, 320, 8, next / 100);
+        }
+        if (persist && changed) {
+            try { sys.localStorage.setItem(this.volumeStorageKey, String(next)); }
+            catch { /* Keep the chosen volume for this session even without storage. */ }
+        }
+    }
+
+    private buildVolumeControl() {
+        this.volumePanel = this.createUI(this.panel, 'VolumeSettings', 500, 130);
+        this.volumePanel.setPosition(0, -240, 0);
+        // Configure the handle before Slider.onEnable registers its drag events.
+        this.volumePanel.active = false;
+        this.volumeLabel = this.createLabel(this.volumePanel, 'VolumeLabel', '', 25, 51, 480, 44);
+        this.volumeLabel.color = new Color(222, 228, 209);
+        const track = this.createUI(this.volumePanel, 'VolumeSlider', 320, 48);
+        this.volumeTrack = track.addComponent(Graphics);
+        const handle = this.createUI(track, 'Handle', 40, 40);
+        const handleSprite = handle.addComponent(Sprite);
+        handleSprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        // Sprite supplies the standard Slider handle; Graphics draws it without a texture asset.
+        const knob = handle.addComponent(Graphics);
+        knob.fillColor = new Color(231, 235, 213);
+        knob.circle(0, 0, 13); knob.fill();
+        knob.strokeColor = new Color(211, 173, 98); knob.lineWidth = 3;
+        knob.circle(0, 0, 13); knob.stroke();
+        this.volumeSlider = track.addComponent(Slider);
+        this.volumeSlider.handle = handleSprite;
+        this.volumeSlider.direction = Slider.Direction.Horizontal;
+        track.on('slide', (slider: Slider) => this.setVolume(slider.progress * 100));
+        const less = this.createButton(this.volumePanel, 'VolumeDown', '−', 0,
+            () => this.setVolume(this.volume - 1), 52, 48);
+        less.setPosition(-212, 0, 0);
+        const more = this.createButton(this.volumePanel, 'VolumeUp', '+', 0,
+            () => this.setVolume(this.volume + 1), 52, 48);
+        more.setPosition(212, 0, 0);
+        const min = this.createLabel(this.volumePanel, 'MinVolume', '0', 18, -37, 60, 30);
+        min.node.setPosition(-160, -37, 0);
+        const max = this.createLabel(this.volumePanel, 'MaxVolume', '100', 18, -37, 60, 30);
+        max.node.setPosition(160, -37, 0);
+        this.setVolume(this.volume, false);
+    }
+
     private buildUI() {
         const canvas = this.uiCanvas!.node;
 
@@ -416,6 +496,7 @@ export class GameManager extends Component {
             14,
             -85,
         );
+        this.buildVolumeControl();
     }
 
     private startGame() {
@@ -433,6 +514,25 @@ export class GameManager extends Component {
         this.bgm!.stop();
         this.bgm!.currentTime = 0;
         this.bgm!.play();
+    }
+
+    private showCover() {
+        this.state = 'cover';
+        this.player!.setEntryBlocked(true);
+        this.player!.freeze();
+        this.readyHint.active = this.pauseButton.active = this.progressHUD.active = false;
+        this.cover = new Node('LevelCover');
+        this.cover.parent = this.uiCanvas!.node;
+        this.cover.addComponent(LevelCover).build(() => this.enterLevel());
+    }
+
+    private enterLevel() {
+        if (this.state !== 'cover') return;
+        this.cover.active = false;
+        this.restartGame();
+        // UI CLICK and the global mouse release can arrive in either order.
+        // Keep the gate through this event dispatch; resetToReady also clears the drag.
+        this.scheduleOnce(() => this.player?.setEntryBlocked(false), 0);
     }
 
     private pauseGame() {
@@ -458,6 +558,7 @@ export class GameManager extends Component {
 
         this.continueButton.active = false;
         this.restartButton.active = false;
+        this.volumePanel.active = false;
 
         this.title.node.setPosition(0, 0, 0);
         this.title.string = '2.0';
@@ -541,6 +642,7 @@ export class GameManager extends Component {
         this.title.string = title;
 
         this.continueButton.active = canContinue;
+        this.volumePanel.active = canContinue;
         this.restartButton.active = true;
         this.restartButton.setPosition(0, -110, 0);
 

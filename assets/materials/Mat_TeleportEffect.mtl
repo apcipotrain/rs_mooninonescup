@@ -8,11 +8,9 @@
     "__uuid__": "a3cd009f-0ab0-420d-9278-b9fdab939bbc",
     "__expectedType__": "cc.EffectAsset"
   },
-  "_techIdx": 1,
+  "_techIdx": 0,
   "_defines": [
-    {
-      "USE_TEXTURE": true
-    },
+    {},
     {},
     {}
   ],
@@ -47,9 +45,12 @@
   ],
   "_props": [
     {
-      "mainTexture": {
-        "__uuid__": "bafe8349-2765-4671-947c-0c869c97a2a6@6c48a",
-        "__expectedType__": "cc.Texture2D"
+      "mainColor": {
+        "__type__": "cc.Color",
+        "r": 89,
+        "g": 209,
+        "b": 221,
+        "a": 255
       }
     },
     {},
