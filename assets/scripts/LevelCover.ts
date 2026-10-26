@@ -65,8 +65,8 @@ export class LevelCover extends Component {
         text.string = '进入关卡'; text.fontSize = 29; text.lineHeight = 38;
         text.color = new Color(29,64,65);
         text.horizontalAlign = Label.HorizontalAlign.CENTER; text.verticalAlign = Label.VerticalAlign.CENTER;
-        let entered = false;
-        button.on(Button.EventType.CLICK,() => { if (!entered) { entered = true; enter(); } });
+        // GameManager guards the cover state; this button also works after returning here.
+        button.on(Button.EventType.CLICK, enter);
         this.label('Instructions','入境后，拖动鼠标或按 A / D、左右方向键启程',18,-270,new Color(163,191,180),960,36);
         this.layout();
     }

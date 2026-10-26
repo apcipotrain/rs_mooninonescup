@@ -74,6 +74,8 @@ export class GameManager extends Component {
     private title!: Label;
     private continueButton!: Node;
     private restartButton!: Node;
+    private backToCoverButton!: Node;
+    private pausedFromReady = false;
     private resultInfo!: Label;
     private resultBar!: Graphics;
 
@@ -143,6 +145,7 @@ export class GameManager extends Component {
         this.player!.isPointerOverUI = (event: EventMouse) => {
             return (
                 this.state === 'cover' ||
+                this.panel.activeInHierarchy ||
                 this.pauseButton.activeInHierarchy &&
                 this.pauseButton
                     .getComponent(UITransform)!
@@ -367,10 +370,10 @@ export class GameManager extends Component {
         this.pauseButton = this.createButton(
             canvas,
             'PauseButton',
-            'Ⅱ',
+            'Ⅱ 设置',
             0,
             this.pauseGame,
-            96,
+            144,
             64,
         );
 
@@ -477,6 +480,11 @@ export class GameManager extends Component {
             this.restartGame,
         );
 
+        this.backToCoverButton = this.createButton(
+            this.panel, 'BackToCoverButton', '返回封面', -70,
+            this.returnToCover,
+        );
+
         this.resultInfo = this.createLabel(
             this.panel,
             'ResultInfo',
@@ -520,10 +528,20 @@ export class GameManager extends Component {
         this.state = 'cover';
         this.player!.setEntryBlocked(true);
         this.player!.freeze();
+        this.panel.active = false;
         this.readyHint.active = this.pauseButton.active = this.progressHUD.active = false;
-        this.cover = new Node('LevelCover');
-        this.cover.parent = this.uiCanvas!.node;
-        this.cover.addComponent(LevelCover).build(() => this.enterLevel());
+        if (!this.cover?.isValid) {
+            this.cover = new Node('LevelCover');
+            this.cover.parent = this.uiCanvas!.node;
+            this.cover.addComponent(LevelCover).build(() => this.enterLevel());
+        }
+        this.cover.active = true;
+        this.cover.setSiblingIndex(this.uiCanvas!.node.children.length - 1);
+    }
+
+    private returnToCover() {
+        this.restartGame();
+        this.showCover();
     }
 
     private enterLevel() {
@@ -532,24 +550,37 @@ export class GameManager extends Component {
         this.restartGame();
         // UI CLICK and the global mouse release can arrive in either order.
         // Keep the gate through this event dispatch; resetToReady also clears the drag.
-        this.scheduleOnce(() => this.player?.setEntryBlocked(false), 0);
+        this.scheduleOnce(() => {
+            if (this.state === 'ready') this.player?.setEntryBlocked(false);
+        }, 0);
     }
 
     private pauseGame() {
-        if (this.state !== 'running') {
+        if (this.state !== 'running' && this.state !== 'ready') {
             return;
         }
 
+        this.pausedFromReady = this.state === 'ready';
         this.state = 'paused';
 
         this.player!.freeze();
         this.bgm!.pause();
 
-        this.showMenu('已暂停', true);
+        this.showMenu(this.pausedFromReady ? '游戏设置' : '已暂停', true);
     }
 
     private beginCountdown() {
         if (this.state !== 'paused') {
+            return;
+        }
+
+        if (this.pausedFromReady) {
+            // Closing settings before play returns to waiting, without countdown or music.
+            this.player!.setEntryBlocked(true);
+            this.restartGame();
+            this.scheduleOnce(() => {
+                if (this.state === 'ready') this.player?.setEntryBlocked(false);
+            }, 0);
             return;
         }
 
@@ -558,6 +589,7 @@ export class GameManager extends Component {
 
         this.continueButton.active = false;
         this.restartButton.active = false;
+        this.backToCoverButton.active = false;
         this.volumePanel.active = false;
 
         this.title.node.setPosition(0, 0, 0);
@@ -577,6 +609,7 @@ export class GameManager extends Component {
 
     private restartGame() {
         this.state = 'ready';
+        this.pausedFromReady = false;
         this.countdownStart = 0;
 
         this.bgm!.stop();
@@ -590,7 +623,7 @@ export class GameManager extends Component {
         this.collectedDiamonds = 0;
 
         this.panel.active = false;
-        this.pauseButton.active = false;
+        this.pauseButton.active = true;
         this.readyHint.active = true;
         this.progressHUD.active = true;
 
@@ -638,13 +671,19 @@ export class GameManager extends Component {
         this.progressHUD.active = false;
         this.panel.active = true;
 
-        this.title.node.setPosition(0, 120, 0);
+        this.title.node.setPosition(0, canContinue ? 210 : 120, 0);
         this.title.string = title;
 
         this.continueButton.active = canContinue;
+        this.continueButton.setPosition(0, 110, 0);
+        this.continueButton.getComponentInChildren(Label)!.string =
+            this.pausedFromReady ? '返回游戏' : '继续游戏';
         this.volumePanel.active = canContinue;
+        this.volumePanel.setPosition(0, -220, 0);
         this.restartButton.active = true;
-        this.restartButton.setPosition(0, -110, 0);
+        this.restartButton.setPosition(0, 20, 0);
+        this.backToCoverButton.active = true;
+        this.backToCoverButton.setPosition(0, canContinue ? -70 : -255, 0);
 
         this.resultInfo.node.active = false;
         this.resultBar.node.active = false;

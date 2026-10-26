@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <title>Moon in One’s Cup</title>
+
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui=true"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="full-screen" content="yes"/>
+    <meta name="screen-orientation" content="landscape"/>
+    <meta name="x5-fullscreen" content="true"/>
+    <meta name="360-fullscreen" content="true"/>
+
+    <meta name="renderer" content="webkit"/>
+    <meta name="force-rendering" content="webkit"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+
+    <link rel="stylesheet" type="text/css" href="<%= cssUrl %>"/>
+    <link rel="icon" href="favicon.ico"/>
+    <style>
+      /* Preserve the same 16:9 camera composition as the 1280 x 720 editor preview. */
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #171717;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #GameDiv {
+        flex: 0 0 auto;
+        position: relative;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: hidden;
+      }
+      #Cocos3dGameContainer, #GameCanvas {
+        width: 100%;
+        height: 100%;
+      }
+      #GameCanvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="GameDiv" cc_exact_fit_screen="false" style="width: 1280px; height: 720px;">
+      <div id="Cocos3dGameContainer">
+        <canvas id="GameCanvas" width="1280" height="720" tabindex="99"></canvas>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var frame = document.getElementById('GameDiv');
+        function fitGameFrame() {
+	  // 宽、高都限制在浏览器可用区域的 85% 内。
+	  var availableWidth = window.innerWidth * 0.85;
+	  var availableHeight = window.innerHeight * 0.85;
+
+	  // 保持 16:9，不裁切、不拉伸。
+	  var width = Math.min(
+	    availableWidth,
+	    availableHeight * 16 / 9
+	  );
+
+	  frame.style.width = width + 'px';
+	  frame.style.height = (width * 9 / 16) + 'px';
+	}
+        // Register before the engine: its resize handler then reads the new frame size.
+        // Write pixel sizes so the Cocos 3.8 screen adapter detects frame-size changes.
+        window.addEventListener('resize', fitGameFrame);
+        window.addEventListener('orientationchange', fitGameFrame);
+        fitGameFrame();
+      }());
+    </script>
+    <%- include(cocosTemplate, {}) %>
+  </body>
+</html>
